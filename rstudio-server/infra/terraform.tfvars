@@ -1,0 +1,5 @@
+region = "eu-west-1"
+vpc_cidr = "10.1.0.0/16"
+rstudio_server_ami = "ami-09a58021cfc089a91"
+rstudio_server_instance_type = "t3.medium"
+instance_key_name = "sandbox-ireland"

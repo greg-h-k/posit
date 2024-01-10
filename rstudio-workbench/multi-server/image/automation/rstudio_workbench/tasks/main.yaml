@@ -1,0 +1,58 @@
+- name: Install helper packages
+  ansible.builtin.package:
+    name: 
+      - software-properties-common
+      - dirmngr
+      - nfs-common
+    state: present
+
+- name: Install r base and prerequisites for rstudio server
+  ansible.builtin.package:
+    name: 
+      - r-base
+      - gdebi-core
+    state: present
+
+- name: Install rstudio workbench
+  ansible.builtin.apt:
+    deb: "{{ rstudio_workbench_deb_url }}"
+    state: present
+
+- name: Create workbench home directory owned by root
+  ansible.builtin.file:
+    path: /efs/workbench/home
+    state: directory
+    owner: root
+    group: root
+
+- name: Create workbench shared storage directory owned by nobody:nogroup
+  ansible.builtin.file:
+    path: /efs/workbench/shared-storage
+    state: directory
+    owner: nobody
+    group: nogroup
+
+- name: Copy rserver conf 
+  ansible.builtin.copy:
+    src: ../templates/rstudio_rserver.conf
+    dest: /etc/rstudio/rserver.conf
+
+- name: Copy launcher conf 
+  ansible.builtin.copy:
+    src: ../templates/rstudio_launcher.conf
+    dest: /etc/rstudio/launcher.conf
+
+- name: Install further helper tools; psql client and aws cli
+  ansible.builtin.package:
+    name: 
+      - postgresql-client
+      - awscli
+    state: present
+
+
+
+
+
+    
+
+
