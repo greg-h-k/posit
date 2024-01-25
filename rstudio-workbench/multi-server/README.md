@@ -16,7 +16,7 @@ This process will use Hashicorp Packer to build our own custom AMI with the requ
 
 In a multi server, load balanced set up, a Postgres database is required for Workbench to track session information and other metadata. 
 
-In this deployment, Amazon Aurora Postgres is used to remove the burden of database administration tasks and allow easier scaling. 
+In this demonstration, Amazon Aurora Postgres is used to remove the burden of database administration tasks and allow easier scaling. 
 
 ### Shared storage 
 
@@ -35,7 +35,7 @@ Workbench includes an internal load balancer but an external one is recommended 
 **Required Tools**  
 The methods described require you to have the aws cli and [session manager plugin for the aws cli](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) installed and you need to authenticate your aws cli.  
 
-You will also need Terraform and Packer. 
+You will also need Terraform, Packer and Ansible in order to build the custom image and then deploy the example architecture infrastructure. 
 
 ### Build the AMI
 To build the AMI, we will use Packer with an Ansible provisioner. During the build process, Packer creates an EC2 instance that we then run a an Ansible playbook against to configure the instance. 
@@ -93,7 +93,7 @@ With the above configuration set in your local ssh configuration file (~/.ssh/co
 
 **Note** you will need to use your instance id for *HostName* and specify your ssh key for *IdentityFile*
 
-Once set up, connect to the instance via 
+Once the SSH configuration is saved, connect to the instance via 
 
 ```
 ssh rstudio-workbench-server-1
@@ -109,13 +109,13 @@ To connect to the postgres database, use your **writer endpoint name** from the 
 
 ![rds endpoint](./docs/rds_endpoint.png)
 
-To connect, run:
+To connect, from your SSH connection on one of the EC2 instances, run:
 
 ```
 psql -h <writer_endpoint> -U postgres --password
 ```
 
-This will prompt for a password. Retrieve the database password from AWS Secrets Manager (this is because we specified *manage_master_user_password = true* for our RDS database) and enter this at the password prompt. Navigate to the RDS cluster secret on the console and then select *Retrieve secret value* and copy the password, entering it into the psql password prompt. 
+This will prompt for a password. Retrieve the database password from AWS Secrets Manager (this is because we specified *manage_master_user_password = true* in our IaC for our RDS database) and enter this at the password prompt. Navigate to the RDS cluster secret on the AWS Secrets Manager console and then select *Retrieve secret value* and copy the password, entering it into the psql password prompt. 
 
 ![rds secret](./docs/rds_secret.png)
 

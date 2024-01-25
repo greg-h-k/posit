@@ -19,20 +19,24 @@ This repo gives a demonstration of how RStudio Server and Shiny Server can be pr
 
 ## Deployment Process
 
-The repo demonstrates using Packer to build a custom AMI that has RStudio Server and Shiny Server installed and configured. 
+The repo demonstrates using [Packer](https://www.packer.io/) to build a custom AMI that has RStudio Server and Shiny Server installed and configured. 
+
+It then demonstrates deploying an Amazon EC2 instance into a custom Amazon Virtual Private Cloud (VPC) that uses your custom built Amazon Machine Image (AMI) containing the RStudio and Shiny server software. You can extend this to add any additional configuration or software you require. 
 
 **Required Tools**
-The methods described require you to have the aws cli and [session manager plugin for the aws cli](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) installed and you need to authenticate your aws cli.  
+The methods described require you to have the aws cli and [session manager plugin for the aws cli](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) installed and you need to authenticate your aws cli. This is utilized in using AWS Systems Manager to connect to the EC2 instance, rather than for example a regular SSH session. 
 
-You will also need Terraform and Packer. 
+You will also need Terraform to deploy the infrastructure as code contained in *infra/*. Packer is required to build the custom AMI and Ansible is used to automate the provisioning and configuration of the EC2 instance before an AMI is created from it. 
 
 ### Build the custom image 
 
-Packer is configured to use AWS Systems Manager (SSM) to connect and run the Ansible provisioning. This means that we don't need to set up SSH access or a bastion host etc, connectivity is provided via SSM. If the instance building your image is launched into your default VPC in a public subnet, this method means that the instance can be left with no inbound security group rules, meaning it can be protected from public internet traffic. 
+When you build the custom image, an EC2 instance is launched and is then provisioned using Ansible, before finally an image of the instance is taken. Packer is configured to use AWS Systems Manager (SSM) to connect and run the Ansible provisioning. This means that we don't need to set up SSH access or a bastion host etc, instead connectivity is provided via SSM. If the instance building your image is launched into your default VPC in a public subnet, this method means that the instance can be left with no inbound security group rules, meaning it can be protected from public internet traffic. 
 
 It does mean however, that we do need to assign an IAM instance profile to the build EC2 instance that has an IAM policy allowing SSM management. The name of this instance profile is passed in as the *ami_build_instance_profile_name* defined in [variables.pkr.hcl](./image/variables.pkr.hcl). Example values are included in this file but in particular *ami_build_instance_profile_name* will need to match the name of an existing ec2 instance profile in your account with the right permissions. This prerequisite can be met by creating an instance profile with the *AmazonSSMManagedInstanceCore* managed policy. 
 
-Once prerequisites are met and the variables file updated with your values, you can build the image. From the *image/* directory, run: 
+Once prerequisites are met and the variables file updated with your values, you can build the image. 
+
+From the *image/* directory, run: 
 ```
 packer build .
 ```
@@ -74,13 +78,15 @@ Host rstudio-server
 	LocalForward 8787 localhost:8787
 	LocalForward 3838 localhost:3838
 	User ubuntu
-	IdentityFile ~/.ssh/sandbox-ireland.pem
+	IdentityFile ~/.ssh/<key_name>.pem
 	ProxyCommand aws ssm start-session --target %h --document-name AWS-StartSSHSession
 ```
 
 This uses AWS Systems Manager to establish the connection. This is why we are able to connect directly to the RStudio Server in a private subnet. 
 
 The *LocalForward* options mean that we can connect to RStudio Server and Shiny server from a local browser. 
+
+We use the SSH session via SSM to provide secure access whilst being able to forward multiple ports. 
 
 To connect using this config, use ```ssh rstudio-server```. This enables us to navigate to: 
 * RStudio Server at localhost:8787 in your browser ![RStudio Server](./docs/rstudio_server.png)

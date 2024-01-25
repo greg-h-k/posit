@@ -14,7 +14,7 @@ Workbench can be set up on
 
 Workbench is a licensed product but is available for free evaluation for a limited time. Amazon Machine Images (AMIs) are available from Posit on AWS Marketplace. These can be used to launch EC2 instances and then configured accordingly. 
 
-This repository includes instructions for deploying to multiple servers along with the supporting infrastructure also required. 
+However, this repository includes instructions for building your own custom images and deploying to multiple servers along with the supporting infrastructure also required. 
 
 See [multi-server](./multi-server/README.md) for instructions relating to a multi server deployment. 
 
